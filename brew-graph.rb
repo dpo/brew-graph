@@ -29,6 +29,8 @@ class BrewGraph
       remove_optional_deps(data)
     end
 
+    prune(data)
+
     graph = case format
         when :dot then Dot.new(data)
         when :graphml then GraphML.new(data)
@@ -129,6 +131,14 @@ class BrewGraph
         targets.keep_if do |target|
           data.include?(target)
         end
+      end
+    end
+
+    def prune(data)
+      data.select!{|source| @formulae.include?(source)}
+
+      data.each_pair do |source, targets|
+        targets.select!{|target| data.include?(target)}
       end
     end
 end
