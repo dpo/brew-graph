@@ -6,12 +6,7 @@ class BrewGraph
 
   def initialize(argv)
     @options = parse_options(argv)
-
-    # If there's one or more remaining arguments, take the first one
-    # and assume that it is the name of a formula
-    if argv.length >= 1
-      @formula = argv.first
-    end
+    @formulae = argv
   end
 
   def run
@@ -24,8 +19,8 @@ class BrewGraph
         deps(:installed)
       elsif all
         deps(:all)
-      elsif @formula
-        deps(@formula)
+      elsif @formulae
+        deps(@formulae)
       else
         abort 'This command requires one of --installed or --all, or a formula argument'
       end
@@ -98,20 +93,22 @@ class BrewGraph
 
     def deps(arg)
       data = {}
-      deps = brew_deps(arg).split("\n")
-      deps.each do |s|
-        node,deps = s.split(':')
-        data[node] = deps.nil? ? nil : deps.strip.split(' ')
+      arg.each do |a|
+        deps = brew_deps(a).split("\n")
+        deps.each do |s|
+          node,deps = s.split(':')
+          data[node] = deps.nil? ? nil : deps.strip.split(' ')
+        end
       end
       data
     end
 
     def brew_deps(arg)
       case arg
-        when :all then %x[brew deps --all]
-        when :installed then %x[brew deps --installed]
+        when :all then %x[brew deps -n --all]
+        when :installed then %x[brew deps -n --installed]
         else # Treat argument as the name of a formula
-          out = %x[brew deps #{arg}]
+          out = %x[brew deps -n #{arg}]
           unless $? == 0 # Check exit code
             abort
           end
